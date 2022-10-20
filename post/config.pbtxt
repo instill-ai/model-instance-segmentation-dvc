@@ -3,11 +3,6 @@ backend: "python"
 max_batch_size: 8
 input [ 
   {
-    name: "image"
-    data_type: TYPE_UINT8
-    dims: [ 3, -1, -1 ]
-  },   
-  {
     name: "scale"
     data_type: TYPE_FP32
     dims: [ 2 ]

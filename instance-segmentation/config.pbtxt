@@ -42,10 +42,6 @@ ensemble_scheduling {
       output_map {
         key: "image"
         value: "preprocessed_image"
-      }      
-      output_map {
-        key: "org_image"
-        value: "org_image"
       }
       output_map {
         key: "scale"
@@ -83,10 +79,6 @@ ensemble_scheduling {
     {
       model_name: "post"
       model_version: 1
-      input_map {
-        key: "image"
-        value: "org_image"
-      }
       input_map {
         key: "scale"
         value: "scale"

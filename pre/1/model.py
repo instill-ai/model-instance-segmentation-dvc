@@ -58,7 +58,6 @@ class TritonPythonModel(object):
     def __init__(self):
         self.output_names = {
             'image': 'image',
-            'org_image': 'org_image',
             'scale': 'scale',
             'pad': 'pad'
         }
@@ -110,9 +109,10 @@ class TritonPythonModel(object):
 
             for img in batch_in:  # img is shape (1,)
                 pil_img = Image.open(io.BytesIO(img.astype(bytes)))
-                resize_org_image = cv2.resize(np.array(pil_img), (640,640), interpolation=cv2.INTER_LINEAR)
-                batch_out['org_image'].append(np.transpose(np.array(resize_org_image), (2, 0, 1)))
-                img, ratio, pad = preprocess(np.array(pil_img))
+                image = np.array(pil_img)
+                if len(image.shape) == 2:  # gray image
+                    image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+                img, ratio, pad = preprocess(image)
                 batch_out['image'].append(np.array(img))
                 batch_out['scale'].append(np.array(ratio))
                 batch_out['pad'].append(np.array(pad))

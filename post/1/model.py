@@ -1,10 +1,8 @@
-from operator import le
 import os
 import numpy as np
 import json
 import cv2
 import torch
-import torch.nn.functional as F
 
 from typing import List
 
@@ -13,6 +11,7 @@ from triton_python_backend_utils import Tensor, InferenceResponse, \
     get_output_config_by_name, triton_string_to_numpy
 
 classes = [line.rstrip('\n') for line in open(os.path.dirname(__file__) + '/coco_classes.txt')]    
+
 
 def rle_encode(mask_image):
     pixels = mask_image.flatten()
@@ -26,7 +25,8 @@ def rle_encode(mask_image):
     runs[1::2] = runs[1::2] - runs[:-1:2]
     return runs
 
-def post_process(image, boxes, labels, masks, scores, scale, pad, score_threshold=0.7):
+
+def post_process(boxes, labels, masks, scores, scale, pad, score_threshold=0.7):
     # Resize boxes
     for b in boxes:
         b[0] -= pad[0]
@@ -39,7 +39,6 @@ def post_process(image, boxes, labels, masks, scores, scale, pad, score_threshol
         b[2] /= scale[1]
         b[3] /= scale[0]
 
-    image = np.array(image)
     rles = []
     ret_boxes = []
     ret_scores = []
@@ -66,7 +65,6 @@ def post_process(image, boxes, labels, masks, scores, scale, pad, score_threshol
 class TritonPythonModel(object):
     def __init__(self):
         self.input_names = {
-            'image': 'image',
             'scale': 'scale',
             'pad': 'pad',
             'boxes': 'boxes',
@@ -80,7 +78,6 @@ class TritonPythonModel(object):
             'labels': 'labels',
             'scores': 'scores',
         }
-
 
     def initialize(self, args):
         model_config = json.loads(args['model_config'])
@@ -139,7 +136,6 @@ class TritonPythonModel(object):
             batch_out = {k: [] for k, name in self.output_names.items(
             ) if name in request.requested_output_names()}
 
-            in_image = batch_in['image']
             in_scale = batch_in['scale']
             in_pad = batch_in['pad']
             in_boxes = batch_in['boxes'] # batching multiple images
@@ -151,8 +147,8 @@ class TritonPythonModel(object):
             rs_labels = []
             rs_rles = []
             rs_scores = []
-            for image, boxes, labels, masks, scores, scale, pad in zip(in_image, in_boxes, in_labels, in_masks, in_scores, in_scale, in_pad): # single image
-                image_rles, image_boxes, image_labels, image_scores = post_process(image, boxes, labels, masks, scores, scale, pad)
+            for boxes, labels, masks, scores, scale, pad in zip(in_boxes, in_labels, in_masks, in_scores, in_scale, in_pad): # single image
+                image_rles, image_boxes, image_labels, image_scores = post_process(boxes, labels, masks, scores, scale, pad)
                 rs_boxes.append(image_boxes)
                 rs_labels.append(image_labels)
                 rs_scores.append(image_scores)
