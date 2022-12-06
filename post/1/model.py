@@ -13,17 +13,15 @@ from triton_python_backend_utils import Tensor, InferenceResponse, \
 classes = [line.rstrip('\n') for line in open(os.path.dirname(__file__) + '/coco_classes.txt')]    
 
 
-def rle_encode(mask_image):
-    pixels = mask_image.flatten()
-    # We avoid issues with '1' at the start or end (at the corners of 
-    # the original image) by setting those pixels to '0' explicitly.
-    # We do not expect these to be non-zero for an accurate mask, 
-    # so this should not harm the score.
-    pixels[0] = 0
-    pixels[-1] = 0
-    runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
-    runs[1::2] = runs[1::2] - runs[:-1:2]
-    return runs
+def rle_encode(im_arr):
+    height, width = im_arr.shape
+    flat = im_arr.flatten()
+    switches = np.nonzero(np.append(flat, 0) != np.append(0, flat))[0]
+    rle_arr = (np.append(switches, switches[-1]) - np.append(0, switches))[0:-1]
+    remaining = width * height - np.sum(rle_arr)
+    if remaining > 0:
+        rle_arr = np.append(rle_arr, remaining)
+    return list(rle_arr)
 
 
 def post_process(boxes, labels, masks, scores, scale, pad, score_threshold=0.7):
