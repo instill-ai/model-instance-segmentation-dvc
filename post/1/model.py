@@ -15,7 +15,7 @@ classes = [line.rstrip('\n') for line in open(os.path.dirname(__file__) + '/coco
 
 def rle_encode(im_arr):
     height, width = im_arr.shape
-    flat = im_arr.flatten()
+    flat = im_arr.T.flatten()
     switches = np.nonzero(np.append(flat, 0) != np.append(0, flat))[0]
     rle_arr = (np.append(switches, switches[-1]) - np.append(0, switches))[0:-1]
     remaining = width * height - np.sum(rle_arr)
